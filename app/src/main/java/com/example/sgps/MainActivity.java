@@ -11,9 +11,11 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -100,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
         //this event is triggered whenever the update interval is made
         locationCallback = new LocationCallback() {
             @Override
@@ -119,11 +123,49 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case PERMISSIONS_FINE_LOCATION:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                    updateLocation();
+                else {
+                    Toast.makeText(this, "this app requires permission to be granted for it to work properly", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                break;
+        }
+    }
+
     private void stopUpdateLocation() {
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+        lat.setText("Not tracking location");
+        lon.setText("Not tracking location");
+        altitude.setText("Not tracking location");
+        acc.setText("Not tracking location");
+        speed.setText("Not tracking location");
+        address.setText("Not tracking location");
+        updates.setText("Not tracking location");
     }
 
     private void startUpdateLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+        updates.setText("Tracking location");
+        checking = true;
     }
+
 
     private void updateUI(Location location) {
         // update all the view elements with new location data
