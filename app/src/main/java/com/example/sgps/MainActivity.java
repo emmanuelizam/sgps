@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -13,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,8 +36,9 @@ public class MainActivity extends AppCompatActivity {
     public static final int MIN_UPDATE_INTERVAL_MILLIS = 500;
     public static final int MAX_UPDATE_DELAY_MILLIS = 2000;
     private static final int PERMISSIONS_FINE_LOCATION = 99;
-    TextView lat, lon, altitude, acc, speed, address, updates, sensor;
+    TextView lat, lon, altitude, acc, speed, address, updates, sensor, count;
     Switch sw_location_updates, sw_gps_save_power;
+    Button bt_new_waypoint, bt_new_waypoint_list, bt_show_map;
 
     // this variable will keep track of whether or not we are checking the location
     boolean checking;
@@ -48,6 +51,12 @@ public class MainActivity extends AppCompatActivity {
 
     // for location updates
     LocationCallback locationCallback;
+
+    // keeping track of my location
+    Location currentLocation;
+
+    // list of locations
+    List<Location> savedLocations;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +73,11 @@ public class MainActivity extends AppCompatActivity {
         sensor = findViewById(R.id.sensor);
         sw_gps_save_power = findViewById(R.id.sw_gps_save_power);
         sw_location_updates = findViewById(R.id.sw_location_updates);
+        count = findViewById(R.id.crumbs_count);
+        bt_new_waypoint = findViewById(R.id.bt_new_way_point);
+        bt_new_waypoint_list = findViewById(R.id.bt_new_way_point_list);
+        bt_show_map = findViewById(R.id.bt_show_map);
+
 
         // initializing locationRequest and how often it is updated
         locationRequest = new LocationRequest.Builder(1000)
@@ -72,6 +86,14 @@ public class MainActivity extends AppCompatActivity {
                 .setMaxUpdateDelayMillis(MAX_UPDATE_DELAY_MILLIS)
                 .setPriority(Priority.PRIORITY_BALANCED_POWER_ACCURACY)
                 .build();
+
+        bt_new_waypoint_list.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(MainActivity.this, show_saved_locations.class);
+                startActivity(i);
+            }
+        });
 
         sw_gps_save_power.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,6 +139,15 @@ public class MainActivity extends AppCompatActivity {
 
             }
         };
+
+        bt_new_waypoint.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MyApplication myApplication = (MyApplication) getApplicationContext();
+                savedLocations = myApplication.getMyLocations();
+                savedLocations.add(currentLocation);
+            }
+        });
 
         updateLocation();
 
@@ -187,6 +218,11 @@ public class MainActivity extends AppCompatActivity {
             address.setText("could not get address");
         }
 
+        MyApplication myApplication = (MyApplication) getApplicationContext();
+        savedLocations = myApplication.getMyLocations();
+
+        count.setText(Integer.toString(savedLocations.size()));
+
     }
 
     private void updateLocation() {
@@ -202,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(Location location) {
                     updateUI(location);
+                    currentLocation = location;
                 }
             });
         }

@@ -15,7 +15,7 @@ import java.util.List;
 
 public class show_saved_locations extends AppCompatActivity {
 
-    ListView lvSavedLocations
+    ListView lvSavedLocations;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
